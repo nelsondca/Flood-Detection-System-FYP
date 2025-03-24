@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flood History - {{ city }}</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <header>
+        <h1>Flood History for {{ city }}</h1>
+    </header>
+    <main>
+        <section class="results">
+            <h2>Results for {{ city }} ({{ year }})</h2>
+            <p>Flooded area percentage: <span id="result-percentage">{{ flood_percentage }}</span>%</p>
+            <p>Was the city flooded? <span id="result-flooded" class="{{ 'flood-yes' if was_flooded == 'YES' else 'flood-no' }}">{{ was_flooded }}</span></p>
+            <p id="historical-note" style="font-style: italic;">{{ historical_note }}</p>
+        </section>
+        <section class="map-container">
+            <div id="map"></div>
+        </section>
+    </main>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([51.8969, -8.4863], 12); // Center on Cork by default
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Add flood and AOI layers
+        const floodLayer = L.tileLayer('{{ map_tiles.flood }}', { opacity: 0.7 }).addTo(map);
+        const aoiLayer = L.tileLayer('{{ map_tiles.aoi }}', { opacity: 0.5 }).addTo(map);
+
+        // Fit bounds to AOI
+        const aoiGeoJSON = L.geoJSON("{{ aoi | tojson }}");
+        map.fitBounds(aoiGeoJSON.getBounds());
+    </script>
+</body>
+</html>

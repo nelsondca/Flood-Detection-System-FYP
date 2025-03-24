@@ -1,0 +1,6 @@
+Flask==2.3.2
+geemap==0.29.0
+rasterio==1.4.3
+numpy==1.24.3Flask==2.3.2
+earthengine-api==0.1.370
+geemap==0.29.0
