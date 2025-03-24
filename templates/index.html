@@ -1,47 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flood Detection System</title>
+    <title>Cork Flood History</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <link rel="stylesheet" href="/static/css/main.css">
     <style>
         body { 
-            margin: 0; 
-            padding: 0; 
+            margin: 0;
+            padding: 0;
             font-family: Arial, sans-serif;
         }
         #map { 
-            height: 70vh; 
-            width: 100%; 
+            height: 60vh;
+            width: 100%;
         }
         .control-panel {
             padding: 20px;
             background: #f5f5f5;
-            border-bottom: 1px solid #ddd;
+            text-align: center;
         }
         .results-panel {
-            padding: 15px;
-            background: #fff;
+            padding: 20px;
             margin: 10px;
+            background: white;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        select, button {
-            padding: 8px 15px;
-            margin-right: 10px;
-            font-size: 16px;
-        }
         button {
+            padding: 10px 20px;
             background: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
+            font-size: 16px;
             cursor: pointer;
         }
         button:hover {
             background: #45a049;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
         }
         .flood-yes {
             color: red;
@@ -51,25 +49,18 @@
             color: green;
             font-weight: bold;
         }
+        #loading {
+            display: none;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Flood Detection System</h1>
-    </header>
-    <main>
-        <section class="controls">
-            <h2>Select a City to Check Flood History</h2>
-            <select id="city-select">
-                <option value="Cork">Cork</option>
-                <option value="Dublin">Dublin</option>
-                <option value="Limerick">Limerick</option>
-                <option value="Sligo">Sligo</option>
-                <option value="Galway">Galway</option>
-            </select>
-            <button id="check-flood-history">Check Flood History</button>
-        </section>
-    </main>
+    <div class="control-panel">
+        <h1>Cork Flood History</h1>
+        <button id="analyze-btn">Check 10-Year Flood History</button>
+        <div id="loading">Processing... This may take a moment...</div>
+    </div>
 
     <div id="results" class="results-panel" style="display: none;">
         <h2>Results for <span id="result-city"></span> (<span id="result-year"></span>)</h2>
@@ -82,8 +73,8 @@
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
-        // Initialize map centered on Ireland
-        const map = L.map('map').setView([53.1424, -7.6921], 7);
+        // Initialize map centered on Cork
+        const map = L.map('map').setView([51.8969, -8.4863], 10);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
@@ -95,23 +86,32 @@
         };
 
         // Analyze button handler
-        document.getElementById('check-flood-history').addEventListener('click', async () => {
-            const city = document.getElementById('city-select').value;
+        document.getElementById('analyze-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('analyze-btn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
             
+            btn.disabled = true;
+            loading.style.display = 'block';
+            results.style.display = 'none';
+
             try {
                 const response = await fetch('/analyze_flood', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ city: city })
+                    body: JSON.stringify({}) // Empty body since we're only analyzing Cork
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 
                 const data = await response.json();
                 
                 if (data.success) {
                     // Show results
-                    document.getElementById('results').style.display = 'block';
                     document.getElementById('result-city').textContent = data.city;
                     document.getElementById('result-year').textContent = data.year;
                     document.getElementById('result-percentage').textContent = data.flood_percentage;
@@ -142,11 +142,17 @@
                     // Fit bounds to AOI
                     const aoiLayer = L.geoJSON(data.aoi);
                     map.fitBounds(aoiLayer.getBounds());
+
+                    results.style.display = 'block';
                 } else {
-                    alert('Error: ' + data.error);
+                    alert('Error: ' + (data.error || 'Unknown error occurred'));
                 }
             } catch (error) {
                 alert('Failed to analyze flood: ' + error.message);
+                console.error('Error:', error);
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
             }
         });
     </script>
