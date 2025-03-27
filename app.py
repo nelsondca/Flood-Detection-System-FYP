@@ -14,13 +14,33 @@ except Exception as e:
     print(f"Failed to initialize Earth Engine: {str(e)}")
     raise
 
-# Cork boundary data
+# Define city boundaries
+CITY_BOUNDARIES = {
+    "Cork": ee.Geometry.Rectangle([-8.570, 51.729, -7.959, 52.009]),
+    "Dublin": ee.Geometry.Rectangle([-6.400, 53.300, -6.100, 53.400]),
+    "Limerick": ee.Geometry.Rectangle([-8.700, 52.600, -8.500, 52.700]),
+    "Sligo": ee.Geometry.Rectangle([-8.500, 54.200, -8.300, 54.300]),
+    "Galway": ee.Geometry.Rectangle([-9.300, 53.200, -8.900, 53.350])
+}
+# Cork boundary data ////// To fix 4 variables only 
+# Latlong top left and latlong bottom right 
+long1 = -8.570156845611686
+lat1 = 52.00904254772663
+long2 = -7.959042343658562
+lat2 = 51.7292195887807
+
+#Galway
+#long1 = -9.5
+#lat1 = 53
+#long2 = -9
+#lat2 = 54
+
 CORK_AOI = ee.Geometry.Polygon([
-    [-8.570156845611686, 52.00904254772663],
-    [-8.570156845611686, 51.7292195887807],
-    [-7.959042343658562, 51.7292195887807],
-    [-7.959042343658562, 52.00904254772663]
-]).buffer(5000)  # 5km buffer
+    [long1, lat1],# top left 
+    [long1, lat2],# bottom left
+    [long2, lat2],# bottom right
+    [long2, lat1] # top right
+]).buffer(1000)  # 5km buffer
 
 @app.route('/')
 def home():
@@ -29,12 +49,27 @@ def home():
 @app.route('/analyze_flood', methods=['POST'])
 def analyze_flood():
     try:
-        # Hardcode Cork analysis since it's our only city
+        # Get city or coordinates from request
+        city = request.json.get('city')
+        lat = request.json.get('latitude')
+        lng = request.json.get('longitude')
+
+        if city:
+            if city not in CITY_BOUNDARIES:
+                return jsonify({'success': False, 'error': f"City '{city}' is not supported."}), 400
+            aoi = CITY_BOUNDARIES[city]
+        elif lat and lng:
+            # Create AOI from latitude and longitude
+            aoi = ee.Geometry.Point([lng, lat]).buffer(5000)  # 5km buffer
+        else:
+            return jsonify({'success': False, 'error': 'No valid city or coordinates provided.'}), 400
+
+        # Calculate date range (10 years ago)
         current_year = datetime.now().year
-        analysis_year = current_year - 10  # 10 years ago
+        analysis_year = current_year - 10
         flood_year = 2013  # Known flood year for Cork
 
-        # Define date ranges (October)
+        # Define seasonal range (October)
         pre_flood_start = f'{analysis_year}-10-01'
         pre_flood_end = f'{analysis_year}-10-17'
         post_flood_start = f'{analysis_year}-10-18'
@@ -42,7 +77,7 @@ def analyze_flood():
 
         # Get Sentinel-1 data
         pre_flood = ee.ImageCollection('COPERNICUS/S1_GRD') \
-            .filterBounds(CORK_AOI) \
+            .filterBounds(aoi) \
             .filterDate(pre_flood_start, pre_flood_end) \
             .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV')) \
             .filter(ee.Filter.eq('instrumentMode', 'IW')) \
@@ -50,7 +85,7 @@ def analyze_flood():
             .median()
 
         post_flood = ee.ImageCollection('COPERNICUS/S1_GRD') \
-            .filterBounds(CORK_AOI) \
+            .filterBounds(aoi) \
             .filterDate(post_flood_start, post_flood_end) \
             .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV')) \
             .filter(ee.Filter.eq('instrumentMode', 'IW')) \
@@ -64,7 +99,7 @@ def analyze_flood():
         # Calculate flood stats
         stats = flood_mask.reduceRegion(
             reducer=ee.Reducer.mean(),
-            geometry=CORK_AOI,
+            geometry=aoi,
             scale=30,
             maxPixels=1e10
         ).getInfo()
@@ -79,13 +114,15 @@ def analyze_flood():
             'palette': ['white', 'red']
         })
         
-        aoi_tiles = ee.Image().paint(CORK_AOI, 1, 3).getMapId({
+        aoi_tiles = ee.Image().paint(aoi, 1, 3).getMapId({
             'palette': ['blue']
         })
 
         return jsonify({
             'success': True,
-            'city': 'Cork, Ireland',
+            'city': city,
+            'latitude': lat,
+            'longitude': lng,
             'year': analysis_year,
             'flood_percentage': flood_percentage,
             'was_flooded': 'YES' if was_flooded else 'NO',
@@ -93,7 +130,7 @@ def analyze_flood():
                 'flood': flood_tiles['tile_fetcher'].url_format,
                 'aoi': aoi_tiles['tile_fetcher'].url_format
             },
-            'aoi': CORK_AOI.getInfo(),
+            'aoi': aoi.getInfo(),
             'historical_note': f"Major floods occurred in {flood_year}" if analysis_year == flood_year else ""
         })
 
@@ -102,6 +139,6 @@ def analyze_flood():
             'success': False,
             'error': str(e)
         }), 500
-
+    
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

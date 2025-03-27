@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Cork Flood History</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flood Detection System</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         body { 
@@ -57,8 +59,18 @@
 </head>
 <body>
     <div class="control-panel">
-        <h1>Cork Flood History</h1>
-        <button id="analyze-btn">Check 10-Year Flood History</button>
+        <h1>Flood Detection System</h1>
+        <p>Enter an Eircode or select a city to check flood history:</p>
+        <input type="text" id="eircode-input" placeholder="Enter Eircode (e.g., T12X123)" />
+        <button id="find-location">Find Location</button>
+        <select id="city-select">
+            <option value="Cork">Cork</option>
+            <option value="Dublin">Dublin</option>
+            <option value="Limerick">Limerick</option>
+            <option value="Sligo">Sligo</option>
+            <option value="Galway">Galway</option>
+        </select>
+        <button id="check-flood-history">Check Flood History</button>
         <div id="loading">Processing... This may take a moment...</div>
     </div>
 
@@ -86,8 +98,9 @@
         };
 
         // Analyze button handler
-        document.getElementById('analyze-btn').addEventListener('click', async () => {
-            const btn = document.getElementById('analyze-btn');
+        document.getElementById('check-flood-history').addEventListener('click', async () => {
+            const city = document.getElementById('city-select').value;
+            const btn = document.getElementById('check-flood-history');
             const loading = document.getElementById('loading');
             const results = document.getElementById('results');
             
@@ -101,7 +114,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({}) // Empty body since we're only analyzing Cork
+                    body: JSON.stringify({ city })
                 });
                 
                 if (!response.ok) {
