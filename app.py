@@ -69,7 +69,7 @@ def analyze_flood():
         analysis_year = current_year - 10
         flood_year = 2013  # Known flood year for Cork
 
-        # Define seasonal range (October)
+        # Define data  (October)
         pre_flood_start = f'{analysis_year}-10-01'
         pre_flood_end = f'{analysis_year}-10-17'
         post_flood_start = f'{analysis_year}-10-18'
@@ -94,7 +94,8 @@ def analyze_flood():
 
         # Calculate flood mask
         difference = post_flood.subtract(pre_flood)
-        flood_mask = difference.gt(2)  # Threshold of 2 dB
+        flood_mask = difference.gt(2).updateMask(difference.gt(2)).clip(aoi)
+
 
         # Calculate flood stats
         stats = flood_mask.reduceRegion(
@@ -107,13 +108,14 @@ def analyze_flood():
         flood_percentage = round(stats['VV'] * 100, 2)
         was_flooded = flood_percentage > 5  # 5% threshold
 
-        # Get map tiles
+        # Get map tiles for the clipped flood mask
         flood_tiles = flood_mask.getMapId({
             'min': 0, 
             'max': 1, 
             'palette': ['white', 'red']
         })
-        
+
+        # Get map tiles for the AOI boundary
         aoi_tiles = ee.Image().paint(aoi, 1, 3).getMapId({
             'palette': ['blue']
         })
