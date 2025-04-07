@@ -2,8 +2,11 @@ from flask import Flask, render_template, jsonify, request
 import ee
 import geemap
 from datetime import datetime
+import ee
+import folium
+from folium import plugins
 
-app = Flask(__name__)
+app = Flask("Flood Detection System")
 
 # Initialize Earth Engine
 try:
