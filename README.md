@@ -1,129 +1,119 @@
-# Flood-Detection-System-FYP using GOOGLE EARTH ENGINE ( Colour Change Analysis)
+# Flood Detection System
 
 ## Table of Contents
-- [Project Overview](#project-overview)
-- [Key Features](#key-features)
-- [System Architecture](#system-architecture)
+- [Project Description](#project-description)
 - [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Methodology](#methodology)
-- [Validation](#validation)
+- [Prerequisites](#prerequisites)
+- [Setup](#setup)
+- [How to Run](#how-to-run)
+- [For Development and Testing (Running the Jupyter Notebook)](#for-development-and-testing-running-the-jupyter-notebook)
+- [Example](#example)
+- [Output](#output)
+- [Technologies Used](#technologies-used)
+- [Outputs](#outputs)
+- [Future Work](#future-work)
+- [Documentation/Research](#documentationresearch)
 
+## Project Description
+This project was developed as a Final Year Project, with a focus on flood detection with satellite data and geospatial analysis. Google Earth Engine (GEE) is used in the system for processing Sentinel-1 radar and Sentinel-2 optical data for detecting and visualizing flooded areas.
 
-## Project Overview
-This project was developed as my Final Year Project, focusing on image-based flood detection using Google Earth Eangine satelite data and computer techniques. The system analyzes images to identify water levels and flood conditions.
+The system has Cork, Ireland, as its case study location, which experienced record flooding in October 2023. The project combines advanced geospatial processing with an intuitive web interface for visualization.
 
-The system combines:
-- Google Earth Engine for satellite data processing
-- Sentinel-1 SAR data for flood detection
-- Sentinel-2 optical data for validation
-- Flask web interface for visualization
-
-The system focuses on Cork, Ireland as a case study area, which experienced significant flooding in October 2023.
-
-## Key Features
-- **Multi-sensor analysis**: Combines Sentinel-1 radar and Sentinel-2 optical data
-- **Temporal comparison**: Pre-flood vs post-flood period analysis
-- **Web dashboard**: Interactive visualization of results
-- **Quantitative metrics**: Flood extent percentage and validation statistics
-- **Geospatial processing**: Handles both city boundaries and custom coordinates
+The system focuses on Cork, Ireland as a case study area, which experienced significant flooding in October 2023, but it is adapted and can analyze any other area in the map.
 
 ## Installation
 
-### Prerequisites
-- Python 3.6+
-- Google Earth Engine account ( with API enabled)
-- Google Cloud Poject
+**Note**: To use this project, you must have your own Google Earth Engine account.  
+Sign up for free at [Google Earth Engine Signup](https://signup.earthengine.google.com/).
 
+### Prerequisites
+- Python 3.8+
+- Google Earth Engine account (with API enabled)
+- Google Cloud Poject Created
 
 ### Setup
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/nelsondca/Flood-Detection-System-FYP.git
-   cd Flood-Detection-System-FYP
+    ```bash
+    git clone https://github.com/nelsondca/Flood-Detection-System-FYP.git
+    cd Flood-Detection-System-FYP
+    ```
 
 2. Set up Python environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
+    ```bash
+    python -m venv new_virtual_environment
+    source venv/bin/activate
+    pip install -r requirements.txt
+    ```
 
 3. Authenticate Earth Engine:
-   ```bash
-   earthengine authenticate
+    ```bash
+    earthengine authenticate
+    ```
 
-4. Set up environment variables:
-   ```bash
-   echo "GEE_PROJCT=atu-fyp" > .env
-   echo "GEE_SERVICE_ACCOUNT
+4. Initiate Earth Engine:
+    ```bash
+    earthengine initialize
+    ```
 
-## How to run
-(start the Flask server)
+## How to Run
+
+```bash
 python app.py
 
-Then access the web interface at:
-http://localhost:5000
 
-For development and testing:
+Then access the web interface at: 
+in my case is http://localhost:5000
+
+Use the web interface to:
+
+Select a city (e.g., Cork, Dublin, Galway, etc.).
+View flood history and map visualizations.
+Analyze flood detection results.
+
+## For development and testing Running the Jupyter Notebook:
 
 Open GEEtest.ipynb 
 
+- Run the jupyter Notebooks to process satellite data.
+- Choose a location ( AOI )
+- Visualize results and flood detection outputs
+- Launch the Leaflet.js frontend to explore the application
 
-Output
+## Example
 
-The script will:
-    1- Display the processed area with the detection layers
-    2- Percentage of flood risk or area flooded
+- Runing front end Red areas show detected floodwater.
+- NDWI difference maps highlight changes before and after flood events.
 
-## Project Structure
+## Output
 
-Flood-Detection-System-FYP/
-├── static/                 # Web assets
-│   ├── css/                # Stylesheets
-│   └── js/                 # JavaScript
-├── templates/              # HTML templates
-│   ├── flood_history.html  # Historical data
-│   └── index.html          # Main interface
-├── GEEtest.ipynb           # Earth Engine analysis
-├── app.py                  # Flask application
-├── requirements.txt        # Python dependencies
-└── README.md
+- The script will:
+    Display the processed area with the detection layers
+    Percentage of flood risk or area flooded
 
-## Methodology
+## Technologies Used
 
-1. Data Collection
+- Google Earth Engine (GEE): Satellite imagery analysis.
+- Python: Core programming language.
+- geemap: Interactive mapping and GEE integration.
+- matplotlib: Data visualization.
+- rasterio: Raster file manipulation.
+- Jupyter Notebook: Development and prototyping.
+- Flask: Web application framework.
+- Leaflet.js: Web map visualization.
 
-Sentinel-1 SAR (C-band radar):
+## Outputs
+Visualizations
+Pre-Flood and Post-Flood Images: Visualized using Sentinel-1 radar data.
+NDWI Water Masks: Generated from Sentinel-2 optical data.
+Flood Masks: Binary masks showing flooded areas.
+Confusion Matrix: Heatmap showing validation results.
+Metrics
+Accuracy: Percentage of correctly identified flooded areas.
+Precision: Percentage of detected floods that are correct.
+Recall: Percentage of actual floods that were detected.
 
-    VV polarization
-    IW mode
-    10m resolution
-
-Sentinel-2 MSI (optical):
-
-    B3 (Green) and B8 (NIR) for NDWI
-    10m resolution
-
-2. Flood Detection Algorithm
-
-Define Area of Interest (Cork boundary)
-Collect pre-flood (Oct 1-17) and post-flood (Oct 18-25) images
-Calculate dB difference: post_flood - pre_flood
-Apply threshold (>2dB) to create flood mask
-Calculate flood percentage within AOI
-
-3. Validation
-
-Compare with Sentinel-2 NDWI (>0.3)
-
-Calculate confusion matrix:
-    True Positives (both methods detect flood)
-    False Positives (SAR only)
-    False Negatives (NDWI only)
-
-Accuracy = TP / (TP + FP + FN)
-Precision = TP / (TP + FP)
-Recall = TP / (TP + FN)
-
-## Technical Implementation
+## Future Work
+Expand AOI: Include additional regions for analysis.
+Improve Validation: Use additional datasets (e.g., JRC water data) for validation.
+Enhance Web Interface: Add more interactive tools for users.
+Automate Threshold Selection: Use machine learning to optimize thresholds for flood detection.
