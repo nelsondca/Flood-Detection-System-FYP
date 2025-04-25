@@ -113,7 +113,6 @@ Precision: Percentage of detected floods that are correct.
 Recall: Percentage of actual floods that were detected.
 
 ## Future Work
-Expand AOI: Include additional regions for analysis.
-Improve Validation: Use additional datasets (e.g., JRC water data) for validation.
+Improve Validation: Use additional datasets for validation.
 Enhance Web Interface: Add more interactive tools for users.
 Automate Threshold Selection: Use machine learning to optimize thresholds for flood detection.
