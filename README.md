@@ -59,7 +59,7 @@ Sign up for free at [Google Earth Engine Signup](https://signup.earthengine.goog
 
 ```bash
 python app.py
-
+```
 
 Then access the web interface at: 
 in my case is http://localhost:5000
