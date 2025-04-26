@@ -100,3 +100,4 @@ document.getElementById('check-flood-history').addEventListener('click', async (
         document.getElementById('loading').style.display = 'none';
     }
 });
+
