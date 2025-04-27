@@ -69,8 +69,8 @@ def analyze_flood():
 
         # Calculate date range (10 years ago)
         current_year = datetime.now().year
-        analysis_year = current_year - 10
-        flood_year = 2013  # Known flood year for Cork
+        analysis_year = current_year - 2 # Example: 2023
+        flood_year = 2023  # Known flood year for Cork
 
         # Define data  (October)
         pre_flood_start = f'{analysis_year}-10-01'

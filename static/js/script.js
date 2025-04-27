@@ -1,30 +1,16 @@
-document.getElementById('detect-flood').addEventListener('click', () => {
-    const city = 'Cork';
-    const preFloodStart = '2023-10-15';
-    const preFloodEnd = '2023-10-17';
-    const postFloodStart = '2023-10-18';
-    const postFloodEnd = '2023-10-25';
-
-    fetch(`/detect_flood?city=${city}&pre_flood_start=${preFloodStart}&pre_flood_end=${preFloodEnd}&post_flood_start=${postFloodStart}&post_flood_end=${postFloodEnd}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('Flood detection completed! Check the map.');
-                // Load the generated map (simplified example)
-                const floodLayer = L.tileLayer(data.map_url).addTo(map);
-            } else {
-                alert('Flood detection failed. Please try again.');
-            }
-        });
-});
-
-// Initialize map centered on Cork
+// Initialize map
 const map = L.map('map').setView([51.8969, -8.4863], 10);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// Find Location Button
+// Store flood and AOI layers globally
+const layers = {
+    flood: null,
+    aoi: null
+};
+
+// Find Location Button (Eircode lookup)
 document.getElementById('find-location').addEventListener('click', async () => {
     const eircode = document.getElementById('eircode-input').value.trim();
     if (!eircode) {
@@ -32,7 +18,7 @@ document.getElementById('find-location').addEventListener('click', async () => {
         return;
     }
 
-    const apiKey = 'AIzaSyArXKNwEr-9tUzn_gylqKtGGrK4aKUcWng'; // API key
+    const apiKey = 'AIzaSyArXKNwEr-9tUzn_gylqKtGGrK4aKUcWng'; 
     const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${eircode}&key=${apiKey}`;
 
     try {
@@ -51,10 +37,8 @@ document.getElementById('find-location').addEventListener('click', async () => {
         const lat = location.lat;
         const lng = location.lng;
 
-        // Display the location result
         document.getElementById('location-result').innerText = `Latitude: ${lat}, Longitude: ${lng}`;
 
-        // Center the map on the found location
         map.setView([lat, lng], 12);
     } catch (error) {
         alert('Failed to find location: ' + error.message);
@@ -84,10 +68,22 @@ document.getElementById('check-flood-history').addEventListener('click', async (
             document.getElementById('result-flooded').innerText = data.was_flooded;
             document.getElementById('historical-note').innerText = data.historical_note;
 
-            // Add AOI boundary to the map
+            // Remove previous layers if any
+            Object.values(layers).forEach(layer => {
+                if (layer) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            // Add flood layer 
+            layers.flood = L.tileLayer(data.map_tiles.flood, { opacity: 0.7 }).addTo(map);
+
+            // Add AOI layer
+            layers.aoi = L.tileLayer(data.map_tiles.aoi, { opacity: 0.5 }).addTo(map);
+
+            // Zoom to AOI
             const aoiLayer = L.geoJSON(data.aoi);
             map.fitBounds(aoiLayer.getBounds());
-            aoiLayer.addTo(map);
 
             document.getElementById('results').style.display = 'block';
         } else {
@@ -100,4 +96,3 @@ document.getElementById('check-flood-history').addEventListener('click', async (
         document.getElementById('loading').style.display = 'none';
     }
 });
-

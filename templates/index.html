@@ -62,7 +62,7 @@
     <div class="control-panel">
         <h1>Flood Detection System</h1>
         <p>Enter an Eircode or select a city to check flood history:</p>
-        <input type="text" id="eircode-input" placeholder="Enter Eircode (e.g., T12 K266 )" />
+        <input type="text" id="eircode-input" placeholder="Enter Eircode (e.g., H91 H3V9 )" />
         <button id="find-location">Find Location</button>
         <select id="city-select">
             <option value="Cork">Cork</option>
@@ -75,102 +75,72 @@
         <div id="loading" style="display: none;">Processing... This may take a moment...</div>
     </div>
 
-    <div id="location-result" style="margin-top: 20px; font-weight: bold;"></div>
+    <div id="location-result" style="margin-top: 20px; font-weight: bold; display: none;"></div>
 
     <div id="results" class="results-panel" style="display: none;">
         <h2>Results for <span id="result-city"></span> (<span id="result-year"></span>)</h2>
-        <p>Flooded area percentage: <span id="result-percentage"></span>%</p>
-        <p>Was the city flooded? <span id="result-flooded"></span></p>
+        <p>Detected flood signal in selected year: <span id="result-percentage"></span>%</p>
+        <p>Estimated flooded coverage (inside AOI): <span id="result-flooded"></span></p>
         <p id="historical-note" style="font-style: italic;"></p>
+
+        <p style="font-style: italic;">
+            Note: This system focuses on Cork, which experienced significant flooding in October 2023. Other cities are available for demonstration purposes only, and may not show real flood events.
+          </p>
     </div>
 
     <div id="map"></div>
-
+    <!-- Load Leaflet library -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
-        // Initialize map centered on Cork
-        const map = L.map('map').setView([51.8969, -8.4863], 10);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
+       
         // Layers
         const layers = {
             flood: null,
             aoi: null
         };
 
-        // Analyze button handler
-        document.getElementById('check-flood-history').addEventListener('click', async () => {
-            const city = document.getElementById('city-select').value;
-            const btn = document.getElementById('check-flood-history');
-            const loading = document.getElementById('loading');
-            const results = document.getElementById('results');
-            
-            btn.disabled = true;
-            loading.style.display = 'block';
-            results.style.display = 'none';
+        document.getElementById('find-location').addEventListener('click', async () => {
+    const eircode = document.getElementById('eircode-input').value.trim();
+    if (!eircode) {
+        alert('Please enter a valid Eircode.');
+        return;
+    }
 
-            try {
-                const response = await fetch('/analyze_flood', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ city })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Show results
-                    document.getElementById('result-city').textContent = data.city;
-                    document.getElementById('result-year').textContent = data.year;
-                    document.getElementById('result-percentage').textContent = data.flood_percentage;
-                    
-                    const floodedElement = document.getElementById('result-flooded');
-                    floodedElement.textContent = data.was_flooded;
-                    floodedElement.className = data.was_flooded === 'YES' ? 'flood-yes' : 'flood-no';
-                    
-                    if (data.historical_note) {
-                        document.getElementById('historical-note').textContent = data.historical_note;
-                    }
+    const apiKey = 'AIzaSyArXKNwEr-9tUzn_gylqKtGGrK4aKUcWng'; // your API key
+    const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${eircode}&key=${apiKey}`;
 
-                    // Clear previous layers
-                    Object.values(layers).forEach(layer => {
-                        if (layer) map.removeLayer(layer);
-                    });
+    try {
+        document.getElementById('loading').style.display = 'block';
+        const response = await fetch(geocodeUrl);
+        if (!response.ok) {
+            throw new Error(`Geocoding API error: ${response.status}`);
+        }
 
-                    // Add flood layer
-                    layers.flood = L.tileLayer(data.map_tiles.flood, {
-                        opacity: 0.7
-                    }).addTo(map);
+        const data = await response.json();
+        if (data.status !== 'OK') {
+            throw new Error(`Geocoding failed: ${data.status}`);
+        }
 
-                    // Add AOI boundary
-                    layers.aoi = L.tileLayer(data.map_tiles.aoi, {
-                        opacity: 0.5
-                    }).addTo(map);
+        const location = data.results[0].geometry.location;
+        const lat = location.lat;
+        const lng = location.lng;
 
-                    // Fit bounds to AOI
-                    const aoiLayer = L.geoJSON(data.aoi);
-                    map.fitBounds(aoiLayer.getBounds());
+        document.getElementById('location-result').innerText = `Latitude: ${lat}, Longitude: ${lng}`;
 
-                    results.style.display = 'block';
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error occurred'));
-                }
-            } catch (error) {
-                alert('Failed to analyze flood: ' + error.message);
-                console.error('Error:', error);
-            } finally {
-                btn.disabled = false;
-                loading.style.display = 'none';
-            }
-        });
+        map.setView([lat, lng], 12);
+    } catch (error) {
+        alert('Failed to find location: ' + error.message);
+        console.error('Error:', error);
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+});
+
     </script>
+
+    
+    <script type ="module" src="/static/js/script.js"></script>
+
 </body>
 </html>
+
