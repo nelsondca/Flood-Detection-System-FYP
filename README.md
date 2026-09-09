@@ -18,7 +18,7 @@
 This project was developed as a Final Year Project, focusing on flood detection using satellite data and geospatial analysis.  
 Google Earth Engine (GEE) is used for processing Sentinel-1 radar and Sentinel-2 optical data to detect and visualize flooded areas.
 
-The system focuses on Cork, Ireland — a region that experienced record flooding in October 2023 — but it can be adapted to analyze any other area on the map.
+The system focuses on Cork, Ireland a region that experienced record flooding in October 2023 but it can be adapted to analyze any other area on the map.
 
 It combines advanced geospatial processing with an intuitive web interface for visualization.
 
